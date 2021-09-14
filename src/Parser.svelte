@@ -60,9 +60,6 @@
           {/each}
         </svelte:component>
       {/if}
-
-    {:else if type === 'code'}
-      <svelte:component this={renderers.code} {...$$restProps} code={$$restProps.raw} />
     {:else}
       <svelte:component this={renderers[type]} {...$$restProps}>
         {#if tokens}
