@@ -1,6 +1,6 @@
 <script>
-  export let lang;
-  export let code;
+  export let lang
+  export let text
 </script>
 
-<pre class={lang}><code>{code}</code></pre>
+<pre class={lang}><code>{text}</code></pre>
