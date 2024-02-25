@@ -71,10 +71,16 @@ This would render something like
 </ul>
 <table>
   <thead>
-    <tr><th>And this is</th><th>A table</th></tr>
+    <tr>
+      <th>And this is</th>
+      <th>A table</th>
+    </tr>
   </thead>
   <tbody>
-    <tr><td>With two</td><td>columns</td></tr>
+    <tr>
+      <td>With two</td>
+      <td>columns</td>
+    </tr>
   </tbody>
 </table>
 ```
@@ -83,13 +89,91 @@ This would render something like
 
 Just like with React Markdown, this package doesn't use `{@html ...}` unless you need to render HTML.
 
-## Options
+## Props
 
-The SvelteMarkdown component accepts the following options:
+The SvelteMarkdown component accepts the following props:
 
-* `source` - *string* The Markdown source to be parsed.
-* `renderers` - *object (optional)* An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
-* `options` - *object (optional)* An object containing [options for Marked](https://marked.js.org/using_advanced#options)
+- `source` - _string_ or _array_ The Markdown source to be parsed, or an array of tokens to be rendered directly.
+- `renderers` - _object (optional)_ An object where the keys represent a node type and the value is a Svelte component. This object will be merged with the default renderers. For now you can check how the default renderers are written in the source code at `src/renderers`.
+- `options` - _object (optional)_ An object containing [options for Marked](https://marked.js.org/using_advanced#options)
+
+## Renderers
+
+To create custom renderer for an element, you can create a Svelte component with the default props ([you can check them here](https://marked.js.org/using_pro#renderer)), for example:
+
+_`ImageComponent.svelte`_
+```svelte
+<script>
+  export let href = "";
+  export let title = undefined;
+  export let text = "";
+</script>
+
+<img
+  src={href}
+  {title}
+  alt={text}
+/>
+```
+
+So you can import the component and pass to the `renderers` props:
+
+```svelte
+<script>
+  import SvelteMarkdown from "svelte-markdown";
+  import ImageComponent from "./renderers/ImageComponent.svelte";
+  export let content;
+</script>
+
+<SvelteMarkdown source={content} 
+  renderers={{ image: ImageComponent }} 
+/>
+```
+
+## Rendering From Tokens
+
+For greater flexibility, an array of tokens may be given as `source`, in which case parsing is skipped and the tokens will be rendered directly. This alows you to generate and transform the tokens freely beforehand. Example:
+
+```html
+<script>
+  import SvelteMarkdown from 'svelte-markdown'
+  import { marked } from 'marked'
+
+  const tokens = marked.lexer('this is an **example**')
+
+  marked.walkTokens(tokens, token=> {
+    if (token.type == 'strong') token.type = 'em'
+    token.raw = token.raw.toUpperCase()
+  })
+</script>
+
+<SvelteMarkdown source={tokens} />
+```
+
+This will render the following:
+
+```html
+<p>THIS IS AN <em>EXAMPLE</em></p>
+```
+
+## Events
+
+A `parsed` event will be fired when the final tokens have been calculated, allowing you to access the raw token array if needed for things like generating Table of Contents from headings.
+
+```html
+<script>
+  import SvelteMarkdown from 'svelte-markdown'
+
+  const source = `# This is a header`
+
+  function handleParsed(event) {
+    //access tokens via event.detail.tokens
+    console.log(event.detail.tokens);
+  }
+</script>
+
+<SvelteMarkdown {source} on:parsed={handleParsed}>
+```
 
 ## Available renderers
 
@@ -129,9 +213,9 @@ As an example, if we have an `orderedlistitem`:
 
 ```html
 <style>
-    li::marker{
-        color: blue;
-    }
+  li::marker {
+    color: blue;
+  }
 </style>
 
 <li><slot></slot></li>
@@ -147,6 +231,18 @@ To use [inline markdown](https://marked.js.org/using_advanced#inline), you can a
 ```html
 <SvelteMarkdown {source} isInline />
 ```
+
+## HTML rendering
+
+While the most common flavours of markdown let you use HTML in markdown paragraphs, due to how Svelte handles plain HTML it is currently not possible to do this with this package. A paragraph must be either _all_ HTML or _all_ markdown.
+
+```markdown
+This is a **markdown** paragraph.
+
+<p>This is an <strong>HTML</strong> paragraph</p>
+```
+
+Note that the HTML paragraph must be enclosed within `<p>` tags.
 
 ## Developing
 

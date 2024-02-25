@@ -1,4 +1,8 @@
-import type { MarkedExtension as MarkedConfig, Tokens } from 'marked'
+import type {
+  MarkedExtension as MarkedConfig,
+  Tokens,
+  TokensList,
+} from 'marked'
 import type { SvelteComponentTyped } from 'svelte'
 
 type MarkedRendererProps<
@@ -55,12 +59,11 @@ type Renderers = {
     MarkedRendererProps<Tokens.HTML | Tokens.Tag>
   >
 }
-
 type Props = {
   /**
-   * The Markdown source to be parsed.
+   * The Markdown source to be parsed, or an array of tokens to be rendered directly.
    */
-  source: string
+  source: string | TokensList
 
   /**
    * An object where the keys represent a node type and the value is a Svelte component. This
@@ -72,10 +75,14 @@ type Props = {
    * Options for [marked](https://marked.js.org/using_advanced#options)
    */
   options?: MarkedConfig
-}
 
+  /**
+   * To use [inline markdown](https://marked.js.org/using_advanced#inline), you can assign the prop `isInline` to the component.
+   */
+  isInline?: boolean
+}
 export default class SvelteMarkdown extends SvelteComponentTyped<
   Props,
-  {},
+  { parsed: CustomEvent<{ tokens: TokensList }> },
   { default: {} }
 > {}
